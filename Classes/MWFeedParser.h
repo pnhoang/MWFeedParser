@@ -104,6 +104,9 @@ typedef enum { FeedTypeUnknown, FeedTypeRSS, FeedTypeRSS1, FeedTypeAtom } FeedTy
 	MWFeedItem *item;
 	MWFeedInfo *info;
 	
+	// Stored the Data
+	NSData *feedData;
+	
 }
 
 #pragma mark Public Properties
@@ -133,6 +136,14 @@ typedef enum { FeedTypeUnknown, FeedTypeRSS, FeedTypeRSS1, FeedTypeAtom } FeedTy
 
 // Init MWFeedParser with a customized request instance
 - (id)initWithFeedRequest:(NSMutableURLRequest *)feedRequest;
+
+// used in case the data is already available through offline download
+- (id) initWithData: (NSData *)feedData;
+
+// the other way back, if the parser downloads successfully
+// we would like to return back the stored data
+// so that we can save for offline storage automatically
+@property (nonatomic, strong) NSData *returnedData;
 
 // Begin parsing
 - (BOOL)parse;

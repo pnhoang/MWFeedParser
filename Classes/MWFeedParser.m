@@ -50,7 +50,7 @@
 
 // Properties
 @synthesize url, request, delegate;
-@synthesize urlConnection, asyncData, asyncTextEncodingName, connectionType;
+@synthesize urlConnection, asyncData, asyncTextEncodingName, connectionType, feedData;
 @synthesize feedParseType, feedParser, currentPath, currentText, currentElementAttributes, item, info;
 @synthesize pathOfElementWithXHTMLType;
 @synthesize stopped, failed, parsing;
@@ -109,6 +109,14 @@
     return self;
 }
 
+- (id)initWithData:(NSData *)data
+{
+	if (self = [super init]){
+		self.feedData = data;
+	}
+	return self;
+}
+
 #pragma mark -
 #pragma mark Parsing
 
@@ -136,9 +144,9 @@
 	[self reset];
 	
 	// Perform checks before parsing
-	if (!url || !delegate) { [self parsingFailedWithErrorCode:MWErrorCodeNotInitiated 
-											   andDescription:@"Delegate or URL not specified"]; return NO; }
-	if (parsing) { [self parsingFailedWithErrorCode:MWErrorCodeGeneral 
+//	if (!url || !delegate) { [self parsingFailedWithErrorCode:MWErrorCodeNotInitiated
+//											   andDescription:@"Delegate or URL not specified"]; return NO; }
+	if (parsing) { [self parsingFailedWithErrorCode:MWErrorCodeGeneral
 									 andDescription:@"Cannot start parsing as parsing is already in progress"]; return NO; }
 	
 	// Reset state for next parse
@@ -155,7 +163,11 @@
 	MWLog(@"MWFeedParser: Connecting & downloading feed data");
 	
 	// Connection
-	if (connectionType == ConnectionTypeAsynchronously) {
+	if (self.feedData)
+	{
+		[self startParsingData: self.feedData textEncodingName: nil];
+	}
+	else if (connectionType == ConnectionTypeAsynchronously) {
 		
 		// Async
 		urlConnection = [[NSURLConnection alloc] initWithRequest:self.request delegate:self];
@@ -173,7 +185,8 @@
 		NSURLResponse *response = nil;
 		NSError *error = nil;
 		NSData *data = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
-		if (data && !error) {
+		if (data && !error)
+		{
 			[self startParsingData:data textEncodingName:[response textEncodingName]]; // Process
 		} else {
 			[self parsingFailedWithErrorCode:MWErrorCodeConnectionFailed 
@@ -261,6 +274,7 @@
 		// Create NSXMLParser
 		if (data) {
 			NSXMLParser *newFeedParser = [[NSXMLParser alloc] initWithData:data];
+			self.returnedData = data;
 			self.feedParser = newFeedParser;
 			if (feedParser) { 
 				
